@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuctionsModule } from './modules/auctions/auctions.module';
+import { BidsModule } from './modules/bids/bids.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuctionsModule } from './modules/auctions/auctions.module';
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
         synchronize: true, // Apenas para desenvolvimento (cria as tabelas automaticamente)
+        timezone: 'Z',
         ssl: {
           rejectUnauthorized: false, // Necessário para conexões externas com o Supabase
         },
@@ -28,6 +30,7 @@ import { AuctionsModule } from './modules/auctions/auctions.module';
     UsersModule,
     AuthModule,
     AuctionsModule,
+    BidsModule,
   ],
   controllers: [],
   providers: [],

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable,NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './users.entity';
@@ -38,7 +38,21 @@ export class UsersService {
       .getOne();
   }
 
-  async findById(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { id } });
+  async findById(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+    return user;
+  }
+
+  async deposit(userId: string, amount: number): Promise<User> {
+    if (amount <= 0) {
+      throw new BadRequestException('O valor do depósito deve ser maior que zero.');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+
+    user.balance_total = Number(user.balance_total) + Number(amount);
+    return this.userRepository.save(user);
   }
 }
