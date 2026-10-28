@@ -42,6 +42,25 @@ export class BidsService {
     await queryRunner.startTransaction();
 
     try {
+      const previousBid = await queryRunner.manager.findOne(this.bidsRepository.target, {
+        where: { auction_id: auctionId },
+        order: { created_at: 'DESC' },
+      });
+
+      if (previousBid && previousBid.user_id !== userId) {
+        const previousUser = await queryRunner.manager.findOne(this.usersRepository.target, {
+          where: { id: previousBid.user_id },
+        });
+
+        if (previousUser) {
+          previousUser.balance_committed = Math.max(
+            0,
+            Number(previousUser.balance_committed) - Number(previousBid.amount)
+          );
+          await queryRunner.manager.save(previousUser);
+        }
+      }
+
       const bid = this.bidsRepository.create({
         user_id: userId,
         auction_id: auctionId,
@@ -59,6 +78,7 @@ export class BidsService {
       return bid;
     } catch (err) {
       await queryRunner.rollbackTransaction();
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException('Erro ao processar o lance. Tente novamente.');
     } finally {
       await queryRunner.release();
